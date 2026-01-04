@@ -1,10 +1,3 @@
--- Migration: create_usage_metrics_table
--- Description: Creates the usage_metrics table
--- Author: Engineering Team
--- Date: 2024-01-03
--- CockroachDB Version: v23.1+
-
--- Up migration
 CREATE TABLE IF NOT EXISTS usage_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

@@ -47,6 +47,20 @@ import (
 )
 ```
 
+## Building
+
+See [BUILD.md](BUILD.md) for detailed build instructions and important notes about:
+- Plugins package location (public, not internal)
+- Migration package compatibility
+- Usage in other repositories
+
+**Quick Start**:
+```bash
+go mod tidy
+go build ./...
+go test ./...
+```
+
 ## License
 
 Apache 2.0

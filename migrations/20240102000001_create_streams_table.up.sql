@@ -1,10 +1,3 @@
--- Migration: create_streams_table
--- Description: Creates the streams table
--- Author: Engineering Team
--- Date: 2024-01-02
--- CockroachDB Version: v23.1+
-
--- Up migration
 CREATE TABLE IF NOT EXISTS streams (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

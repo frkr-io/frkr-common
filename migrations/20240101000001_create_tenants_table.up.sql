@@ -1,10 +1,3 @@
--- Migration: create_tenants_table
--- Description: Creates the tenants table
--- Author: Engineering Team
--- Date: 2024-01-01
--- CockroachDB Version: v23.1+
-
--- Up migration
 CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name STRING(255) NOT NULL,
