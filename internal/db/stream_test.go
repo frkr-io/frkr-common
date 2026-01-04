@@ -4,12 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/frkr-io/frkr-common/migrate"
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/cockroachdb"
 )
@@ -30,33 +28,18 @@ func setupTestDB(t *testing.T) (*sql.DB, string) {
 	connConfig, err := cockroachContainer.ConnectionConfig(ctx)
 	require.NoError(t, err)
 
-	// Get the mapped port (container exposes 26257, we need the host port)
-	port, err := cockroachContainer.MappedPort(ctx, "26257")
-	require.NoError(t, err)
-
-	// Build connection string for migrations (cockroachdb:// format)
-	migrateURL := fmt.Sprintf("cockroachdb://%s@%s:%s/%s?sslmode=disable",
+	// Build connection string
+	dbURL := fmt.Sprintf("cockroachdb://%s@%s:%d/%s?sslmode=disable",
 		connConfig.User,
-		"localhost",
-		port.Port(),
+		connConfig.Host,
+		connConfig.Port,
 		connConfig.Database,
 	)
-
-	// Get absolute path to migrations directory (from db/ directory, go up to frkr-common root)
-	migrationsPath, err := filepath.Abs("../migrations")
-	require.NoError(t, err)
 
 	// Run migrations
-	err = migrate.RunMigrations(migrateURL, migrationsPath)
+	migrationsPath := "../../migrations"
+	err = migrate.RunMigrations(dbURL, migrationsPath)
 	require.NoError(t, err)
-
-	// Build connection string for sql.Open (postgres:// format for lib/pq)
-	// lib/pq uses postgres:// format, not cockroachdb://
-	dbURL := fmt.Sprintf("postgres://%s@localhost:%s/%s?sslmode=disable",
-		connConfig.User,
-		port.Port(),
-		connConfig.Database,
-	)
 
 	// Open database connection
 	db, err := sql.Open("postgres", dbURL)
