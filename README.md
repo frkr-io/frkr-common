@@ -12,6 +12,32 @@ Shared Go library for frkr services and tools.
 - **Database migrations** for schema management
 - **Message definitions** for ingest and streaming protocols
 
+## Dependencies
+
+This repository uses [`frkr-proto`](https://github.com/frkr-io/frkr-proto) as a Git submodule for Protocol Buffer definitions.
+
+### Initializing the Submodule
+
+When cloning this repository, initialize the submodule:
+
+```bash
+git submodule update --init --recursive
+```
+
+Or clone with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/frkr-io/frkr-common.git
+```
+
+### Updating the Submodule
+
+To update to the latest version of `frkr-proto`:
+
+```bash
+git submodule update --remote proto
+```
+
 ## Installation
 
 ```bash
