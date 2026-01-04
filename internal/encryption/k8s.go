@@ -10,8 +10,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-
-	"github.com/frkr-io/frkr-common/internal/plugins"
 )
 
 // K8sEncryptionPlugin implements encryption using Kubernetes secrets
