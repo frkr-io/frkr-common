@@ -1,67 +1,123 @@
 # frkr-common
 
-Shared Go library for the Traffic Mirroring Platform.
+Shared Go library for frkr services and tools.
 
-## Purpose
+## Overview
 
-This repository provides shared functionality used across all frkr Go services, including:
-- Plugin interfaces (Auth, Encryption)
-- Open-source plugin implementations
-- Protobuf bindings
-- Common utilities and error types
-- Database migrations
+`frkr-common` provides shared functionality used across all frkr Go services, including:
 
-## Structure
+- **Plugin interfaces** for authentication and encryption
+- **Common data models** for streams, tenants, and messages
+- **Database utilities** for stream and tenant management
+- **Database migrations** for schema management
+- **Message definitions** for ingest and streaming protocols
 
-```
-frkr-common/
-├── internal/
-│   ├── plugins/          # Plugin interfaces
-│   │   ├── auth.go
-│   │   └── encryption.go
-│   ├── auth/             # Open auth implementations
-│   │   ├── basic.go
-│   │   └── oidc.go
-│   ├── encryption/       # Open encryption implementations
-│   │   └── k8s.go
-│   ├── errors/           # Common error types
-│   └── models/           # Shared data models
-├── migrations/            # Database migrations
-├── go.mod
-├── go.sum
-└── README.md
-```
+## Installation
 
-## Dependencies
-
-- `frkr-proto` - Protobuf definitions (Git submodule)
-- `github.com/golang-migrate/migrate/v4` - Database migrations
-- `github.com/golang-migrate/migrate/v4/database/cockroachdb` - CockroachDB driver
-
-## Usage
-
-```go
-import (
-    "github.com/frkr-io/frkr-common/auth"
-    "github.com/frkr-io/frkr-common/encryption"
-)
+```bash
+go get github.com/frkr-io/frkr-common
 ```
 
 ## Building
 
-See [BUILD.md](BUILD.md) for detailed build instructions and important notes about:
-- Plugins package location (public, not internal)
-- Migration package compatibility
-- Usage in other repositories
+Build the migrate tool:
 
-**Quick Start**:
 ```bash
-go mod tidy
-go build ./...
-go test ./...
+make build
 ```
+
+The binary will be created in the `bin/` directory as `bin/migrate`.
+
+To clean build artifacts:
+
+```bash
+make clean
+```
+
+## Quick Start
+
+### Using Database Utilities
+
+```go
+import (
+    "database/sql"
+    "github.com/frkr-io/frkr-common/db"
+    "github.com/frkr-io/frkr-common/models"
+    _ "github.com/lib/pq"
+)
+
+// Connect to database
+db, err := sql.Open("postgres", "postgres://user@localhost/dbname?sslmode=disable")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create or get a tenant
+tenant, err := db.CreateOrGetTenant(db, "my-tenant")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create a stream
+stream, err := db.CreateStream(db, tenant.ID, "my-api", "My API stream", 7)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Using Authentication
+
+```go
+import "github.com/frkr-io/frkr-common/auth"
+
+// Validate Basic Auth header
+username, password, ok := auth.ValidateBasicAuth(authHeader)
+if !ok {
+    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+    return
+}
+```
+
+### Running Migrations
+
+**Using the migrate tool:**
+
+```bash
+make build
+./bin/migrate \
+  --db-url="postgres://user@localhost/dbname?sslmode=disable" \
+  --migrations-path="./migrations"
+```
+
+**Or programmatically:**
+
+```go
+import "github.com/frkr-io/frkr-common/migrate"
+
+err := migrate.RunMigrations(
+    "postgres://user@localhost/dbname?sslmode=disable",
+    "/path/to/migrations",
+)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+## Package Reference
+
+- **`auth`** - Authentication utilities (Basic Auth validation)
+- **`db`** - Database operations (streams, tenants)
+- **`messages`** - Message type definitions for ingest and streaming
+- **`migrate`** - Database migration runner
+- **`models`** - Common data models (Stream, Tenant)
+- **`plugins`** - Plugin interfaces for auth and encryption
+
+## Requirements
+
+- Go 1.21 or later
+- PostgreSQL-compatible database (for migrations and database operations)
+- Kafka-compatible message broker (for message streaming)
 
 ## License
 
 Apache 2.0
-

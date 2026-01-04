@@ -125,9 +125,9 @@ func TestCreateStream(t *testing.T) {
 		require.Equal(t, "Test API stream", stream.Description)
 		require.Equal(t, "active", stream.Status)
 		require.Equal(t, 7, stream.RetentionDays)
-		require.NotEmpty(t, stream.RedpandaTopic)
-		require.Contains(t, stream.RedpandaTopic, "stream-")
-		require.Contains(t, stream.RedpandaTopic, "my-api")
+		require.NotEmpty(t, stream.Topic)
+		require.Contains(t, stream.Topic, "stream-")
+		require.Contains(t, stream.Topic, "my-api")
 	})
 
 	t.Run("duplicate stream name fails", func(t *testing.T) {
@@ -139,10 +139,10 @@ func TestCreateStream(t *testing.T) {
 	t.Run("stream topic name sanitization", func(t *testing.T) {
 		stream, err := CreateStream(db, tenant.ID, "My Test API", "With spaces", 14)
 		require.NoError(t, err)
-		require.NotEmpty(t, stream.RedpandaTopic)
+		require.NotEmpty(t, stream.Topic)
 		// Topic should be lowercase and use hyphens
-		require.NotContains(t, stream.RedpandaTopic, " ")
-		require.NotContains(t, stream.RedpandaTopic, "My")
+		require.NotContains(t, stream.Topic, " ")
+		require.NotContains(t, stream.Topic, "My")
 	})
 }
 

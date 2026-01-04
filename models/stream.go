@@ -20,7 +20,7 @@ type Stream struct {
 	Description  string
 	Status       string
 	RetentionDays int
-	RedpandaTopic string
+	Topic string // Kafka-compatible broker topic name
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time

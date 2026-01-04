@@ -1,4 +1,5 @@
 # Binaries
+migrate
 *.exe
 *.exe~
 *.dll
@@ -27,4 +28,3 @@ Thumbs.db
 # Build
 /bin/
 /dist/
-

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS streams (
     description TEXT,
     status STRING(50) NOT NULL DEFAULT 'active',
     retention_days INT NOT NULL DEFAULT 7,
-    redpanda_topic STRING(255) NOT NULL UNIQUE,
+    topic STRING(255) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ,

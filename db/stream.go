@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frkr-io/frkr-common/internal/models"
+	"github.com/frkr-io/frkr-common/models"
 	"github.com/lib/pq"
 )
 
@@ -58,7 +58,7 @@ func CreateOrGetTenant(db *sql.DB, name string) (*models.Tenant, error) {
 
 // CreateStream creates a new stream for a tenant
 func CreateStream(db *sql.DB, tenantID, streamName, description string, retentionDays int) (*models.Stream, error) {
-	// Generate Redpanda topic name: stream-<tenant-id>-<stream-name>
+	// Generate Kafka-compatible topic name: stream-<tenant-id>-<stream-name>
 	// Sanitize for topic name (lowercase, replace spaces/special chars with hyphens)
 	topicName := fmt.Sprintf("stream-%s-%s", 
 		strings.ToLower(strings.ReplaceAll(tenantID, "-", "")),
@@ -75,9 +75,9 @@ func CreateStream(db *sql.DB, tenantID, streamName, description string, retentio
 	var stream models.Stream
 	
 	err := db.QueryRow(`
-		INSERT INTO streams (tenant_id, name, description, retention_days, redpanda_topic, status)
+		INSERT INTO streams (tenant_id, name, description, retention_days, topic, status)
 		VALUES ($1, $2, $3, $4, $5, 'active')
-		RETURNING id, tenant_id, name, description, status, retention_days, redpanda_topic, created_at, updated_at, deleted_at
+		RETURNING id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
 	`, tenantID, streamName, description, retentionDays, topicName).Scan(
 		&stream.ID,
 		&stream.TenantID,
@@ -85,7 +85,7 @@ func CreateStream(db *sql.DB, tenantID, streamName, description string, retentio
 		&stream.Description,
 		&stream.Status,
 		&stream.RetentionDays,
-		&stream.RedpandaTopic,
+		&stream.Topic,
 		&stream.CreatedAt,
 		&stream.UpdatedAt,
 		&stream.DeletedAt,
@@ -115,7 +115,7 @@ func GetStream(db *sql.DB, tenantID, streamIdentifier string) (*models.Stream, e
 	if len(streamIdentifier) == 36 && strings.Contains(streamIdentifier, "-") {
 		// Looks like a UUID
 		query = `
-			SELECT id, tenant_id, name, description, status, retention_days, redpanda_topic, created_at, updated_at, deleted_at
+			SELECT id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
 			FROM streams
 			WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
 		`
@@ -123,7 +123,7 @@ func GetStream(db *sql.DB, tenantID, streamIdentifier string) (*models.Stream, e
 	} else {
 		// Try by name
 		query = `
-			SELECT id, tenant_id, name, description, status, retention_days, redpanda_topic, created_at, updated_at, deleted_at
+			SELECT id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
 			FROM streams
 			WHERE name = $1 AND tenant_id = $2 AND deleted_at IS NULL
 		`
@@ -137,7 +137,7 @@ func GetStream(db *sql.DB, tenantID, streamIdentifier string) (*models.Stream, e
 		&stream.Description,
 		&stream.Status,
 		&stream.RetentionDays,
-		&stream.RedpandaTopic,
+		&stream.Topic,
 		&stream.CreatedAt,
 		&stream.UpdatedAt,
 		&stream.DeletedAt,
@@ -156,7 +156,7 @@ func GetStream(db *sql.DB, tenantID, streamIdentifier string) (*models.Stream, e
 // ListStreams lists all streams for a tenant
 func ListStreams(db *sql.DB, tenantID string) ([]*models.Stream, error) {
 	rows, err := db.Query(`
-		SELECT id, tenant_id, name, description, status, retention_days, redpanda_topic, created_at, updated_at, deleted_at
+		SELECT id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
 		FROM streams
 		WHERE tenant_id = $1 AND deleted_at IS NULL
 		ORDER BY created_at DESC
@@ -176,7 +176,7 @@ func ListStreams(db *sql.DB, tenantID string) ([]*models.Stream, error) {
 			&stream.Description,
 			&stream.Status,
 			&stream.RetentionDays,
-			&stream.RedpandaTopic,
+			&stream.Topic,
 			&stream.CreatedAt,
 			&stream.UpdatedAt,
 			&stream.DeletedAt,
