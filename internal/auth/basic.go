@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frkr-io/frkr-common/internal/plugins"
+	"github.com/frkr-io/frkr-common/plugins"
 )
 
 // BasicAuthPlugin implements basic username/password authentication

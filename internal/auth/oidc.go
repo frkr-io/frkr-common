@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/frkr-io/frkr-common/internal/plugins"
+	"github.com/frkr-io/frkr-common/plugins"
 	"golang.org/x/oauth2"
 )
 
