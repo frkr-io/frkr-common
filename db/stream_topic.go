@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// GetStreamTopic retrieves the Kafka-compatible topic name for a stream
+// GetStreamTopic retrieves the topic name for a stream (Kafka Protocol compliant)
 func GetStreamTopic(db *sql.DB, streamName string) (string, error) {
 	var topic string
 	err := db.QueryRow(`

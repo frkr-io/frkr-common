@@ -58,7 +58,7 @@ func CreateOrGetTenant(db *sql.DB, name string) (*models.Tenant, error) {
 
 // CreateStream creates a new stream for a tenant
 func CreateStream(db *sql.DB, tenantID, streamName, description string, retentionDays int) (*models.Stream, error) {
-	// Generate Kafka-compatible topic name: stream-<tenant-id>-<stream-name>
+	// Generate topic name (Kafka Protocol compliant): stream-<tenant-id>-<stream-name>
 	// Sanitize for topic name (lowercase, replace spaces/special chars with hyphens)
 	topicName := fmt.Sprintf("stream-%s-%s", 
 		strings.ToLower(strings.ReplaceAll(tenantID, "-", "")),
