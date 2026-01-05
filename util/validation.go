@@ -23,3 +23,31 @@ func ValidateUsername(username string) error {
 	return nil
 }
 
+// ValidateStreamName validates a stream name according to frkr standards.
+// Stream names must:
+// - Not be empty
+// - Not exceed 100 characters
+func ValidateStreamName(streamName string) error {
+	if streamName == "" {
+		return fmt.Errorf("stream name cannot be empty")
+	}
+	if len(streamName) > 100 {
+		return fmt.Errorf("stream name cannot exceed 100 characters")
+	}
+	return nil
+}
+
+// NormalizeRetentionDays normalizes and validates retention days.
+// - If days <= 0, returns 7 (default)
+// - If days > 365, returns an error
+// - Otherwise returns the provided value
+func NormalizeRetentionDays(days int) (int, error) {
+	if days <= 0 {
+		return 7, nil
+	}
+	if days > 365 {
+		return 0, fmt.Errorf("retention days cannot exceed 365")
+	}
+	return days, nil
+}
+
