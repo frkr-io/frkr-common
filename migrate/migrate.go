@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/cockroachdb"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/cockroachdb" // CockroachDB driver registration
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"    // PostgreSQL driver registration
+	_ "github.com/golang-migrate/migrate/v4/source/file"          // File source driver registration
 )
 
 // RunMigrations runs all pending migrations

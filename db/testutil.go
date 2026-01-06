@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/frkr-io/frkr-common/migrate"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // PostgreSQL driver registration
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/cockroachdb"
 )

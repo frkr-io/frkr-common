@@ -154,7 +154,7 @@ func (hc *HealthChecker) HandleReadiness(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp) // Error ignored: can't recover if response write fails
 }
 
 // HandleLiveness checks if the gateway process is alive
@@ -168,7 +168,7 @@ func (hc *HealthChecker) HandleLiveness(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp) // Error ignored: can't recover if response write fails
 }
 
 // HandleStatus returns detailed service status
@@ -184,7 +184,7 @@ func (hc *HealthChecker) HandleStatus(w http.ResponseWriter, r *http.Request, po
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp) // Error ignored: can't recover if response write fails
 }
 
 // RegisterHealthEndpoints registers standard health endpoints on a ServeMux
