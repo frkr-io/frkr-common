@@ -133,10 +133,12 @@ if err != nil {
 
 - **`auth`** - Authentication utilities (Basic Auth validation)
 - **`db`** - Database operations (streams, tenants)
+- **`gateway`** - Common gateway configuration, broker integration, and health checks
 - **`messages`** - Message type definitions for ingest and streaming
 - **`migrate`** - Database migration runner
 - **`models`** - Common data models (Stream, Tenant)
 - **`plugins`** - Plugin interfaces for auth and encryption
+- **`util`** - Shared utility functions (validation, passwords)
 
 ## Requirements
 
