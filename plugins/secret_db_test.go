@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
-	dbcommon "github.com/frkr-io/frkr-common/db"
 	"github.com/frkr-io/frkr-common/db"
+	dbcommon "github.com/frkr-io/frkr-common/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
