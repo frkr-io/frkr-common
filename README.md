@@ -35,7 +35,7 @@ git clone --recurse-submodules https://github.com/frkr-io/frkr-common.git
 To update to the latest version of `frkr-proto`:
 
 ```bash
-git submodule update --remote proto
+git submodule update --remote frkr-proto
 ```
 
 ## Installation

@@ -1,4 +1,4 @@
-[submodule "proto"]
-	path = proto
+[submodule "frkr-proto"]
+	path = frkr-proto
 	url = https://github.com/frkr-io/frkr-proto.git
 
