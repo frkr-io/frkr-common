@@ -8,9 +8,9 @@ import (
 	"strconv"
 )
 
-// Config holds common gateway configuration
+// GatewayBaseConfig holds common gateway configuration
 // Supports both connection strings and individual components
-type Config struct {
+type GatewayBaseConfig struct {
 	HTTPPort int
 
 	// Database configuration - connection string or individual components
@@ -30,7 +30,7 @@ type Config struct {
 // LoadConfig loads configuration from environment variables (12-factor app pattern)
 // Environment variables override any values already set in the config.
 // Required fields must be set either in config or via environment variables.
-func LoadConfig(cfg *Config) {
+func LoadConfig(cfg *GatewayBaseConfig) {
 	if envURL := os.Getenv("DB_URL"); envURL != "" {
 		cfg.DBURL = envURL
 	}
@@ -46,7 +46,7 @@ func LoadConfig(cfg *Config) {
 
 // ValidateConfig validates that all required configuration is present.
 // Returns error if required config is missing.
-func ValidateConfig(cfg *Config) error {
+func ValidateConfig(cfg *GatewayBaseConfig) error {
 	// Validate database config - need either DBURL or individual components
 	hasDBURL := cfg.DBURL != ""
 	hasDBComponents := cfg.DBHost != "" && cfg.DBName != ""
@@ -65,7 +65,7 @@ func ValidateConfig(cfg *Config) error {
 }
 
 // MustLoadConfig loads and validates configuration, exiting on error
-func MustLoadConfig(cfg *Config) {
+func MustLoadConfig(cfg *GatewayBaseConfig) {
 	LoadConfig(cfg)
 	if err := ValidateConfig(cfg); err != nil {
 		log.Fatal(err)
@@ -73,9 +73,9 @@ func MustLoadConfig(cfg *Config) {
 }
 
 // LoadConfigFromFlags loads configuration from command-line flags and environment variables
-// Defines flags, parses them if not already parsed, and returns Config
-// Returns Config populated from flags and environment variables, or error if validation fails
-func LoadConfigFromFlags() (*Config, error) {
+// Defines flags, parses them if not already parsed, and returns GatewayBaseConfig
+// Returns GatewayBaseConfig populated from flags and environment variables, or error if validation fails
+func LoadConfigFromFlags() (*GatewayBaseConfig, error) {
 	httpPort := flag.Int("http-port", 8080, "HTTP server port")
 	dbURL := flag.String("db-url", "", "Postgres-compatible database connection URL (can use DB_URL env var instead)")
 	brokerURL := flag.String("broker-url", "", "Broker URL (can use BROKER_URL env var instead)")
@@ -85,7 +85,7 @@ func LoadConfigFromFlags() (*Config, error) {
 		flag.Parse()
 	}
 
-	cfg := &Config{
+	cfg := &GatewayBaseConfig{
 		HTTPPort: *httpPort,
 		DBURL:    *dbURL,
 		BrokerURL: *brokerURL,

@@ -38,8 +38,8 @@ type StatusResponse struct {
 	Ready    bool   `json:"ready"`
 }
 
-// HealthChecker manages health state for a gateway service
-type HealthChecker struct {
+// GatewayHealthChecker manages health state for a gateway service
+type GatewayHealthChecker struct {
 	mu            sync.RWMutex
 	dbHealthy     bool
 	brokerHealthy bool
@@ -48,9 +48,9 @@ type HealthChecker struct {
 	serviceName   string
 }
 
-// NewHealthChecker creates a new health checker
-func NewHealthChecker(serviceName, version string) *HealthChecker {
-	return &HealthChecker{
+// NewGatewayHealthChecker creates a new health checker
+func NewGatewayHealthChecker(serviceName, version string) *GatewayHealthChecker {
+	return &GatewayHealthChecker{
 		startTime:   time.Now(),
 		version:     version,
 		serviceName: serviceName,
@@ -58,7 +58,7 @@ func NewHealthChecker(serviceName, version string) *HealthChecker {
 }
 
 // StartHealthCheckLoop starts a background goroutine that periodically checks dependencies
-func (hc *HealthChecker) StartHealthCheckLoop(db *sql.DB, brokerURL string) {
+func (hc *GatewayHealthChecker) StartHealthCheckLoop(db *sql.DB, brokerURL string) {
 	// Initial check
 	hc.CheckDependencies(db, brokerURL)
 
@@ -71,7 +71,7 @@ func (hc *HealthChecker) StartHealthCheckLoop(db *sql.DB, brokerURL string) {
 }
 
 // CheckDependencies performs health checks on database and broker
-func (hc *HealthChecker) CheckDependencies(db *sql.DB, brokerURL string) {
+func (hc *GatewayHealthChecker) CheckDependencies(db *sql.DB, brokerURL string) {
 	hc.mu.Lock()
 	defer hc.mu.Unlock()
 
@@ -99,27 +99,27 @@ func (hc *HealthChecker) CheckDependencies(db *sql.DB, brokerURL string) {
 }
 
 // IsReady returns true if all dependencies are healthy
-func (hc *HealthChecker) IsReady() bool {
+func (hc *GatewayHealthChecker) IsReady() bool {
 	hc.mu.RLock()
 	defer hc.mu.RUnlock()
 	return hc.dbHealthy && hc.brokerHealthy
 }
 
 // GetHealthState returns the current health state
-func (hc *HealthChecker) GetHealthState() (dbHealthy, brokerHealthy bool) {
+func (hc *GatewayHealthChecker) GetHealthState() (dbHealthy, brokerHealthy bool) {
 	hc.mu.RLock()
 	defer hc.mu.RUnlock()
 	return hc.dbHealthy, hc.brokerHealthy
 }
 
 // HandleHealth is the default health endpoint (alias for readiness)
-func (hc *HealthChecker) HandleHealth(w http.ResponseWriter, r *http.Request) {
+func (hc *GatewayHealthChecker) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	hc.HandleReadiness(w, r)
 }
 
 // HandleReadiness checks if the gateway is ready to serve traffic
 // Returns 503 if dependencies are unhealthy
-func (hc *HealthChecker) HandleReadiness(w http.ResponseWriter, r *http.Request) {
+func (hc *GatewayHealthChecker) HandleReadiness(w http.ResponseWriter, r *http.Request) {
 	dbHealthy, brokerHealthy := hc.GetHealthState()
 
 	dbCheck := Check{Status: boolToStatus(dbHealthy)}
@@ -159,7 +159,7 @@ func (hc *HealthChecker) HandleReadiness(w http.ResponseWriter, r *http.Request)
 
 // HandleLiveness checks if the gateway process is alive
 // Always returns 200 if the process is running
-func (hc *HealthChecker) HandleLiveness(w http.ResponseWriter, r *http.Request) {
+func (hc *GatewayHealthChecker) HandleLiveness(w http.ResponseWriter, r *http.Request) {
 	resp := HealthResponse{
 		Status:  "healthy",
 		Version: hc.version,
@@ -172,7 +172,7 @@ func (hc *HealthChecker) HandleLiveness(w http.ResponseWriter, r *http.Request) 
 }
 
 // HandleStatus returns detailed service status
-func (hc *HealthChecker) HandleStatus(w http.ResponseWriter, r *http.Request, port int, dbURL, brokerURL string) {
+func (hc *GatewayHealthChecker) HandleStatus(w http.ResponseWriter, r *http.Request, port int, dbURL, brokerURL string) {
 	resp := StatusResponse{
 		Service:  hc.serviceName,
 		Version:  hc.version,
@@ -188,7 +188,7 @@ func (hc *HealthChecker) HandleStatus(w http.ResponseWriter, r *http.Request, po
 }
 
 // RegisterHealthEndpoints registers standard health endpoints on a ServeMux
-func (hc *HealthChecker) RegisterHealthEndpoints(mux *http.ServeMux, port int, dbURL, brokerURL string) {
+func (hc *GatewayHealthChecker) RegisterHealthEndpoints(mux *http.ServeMux, port int, dbURL, brokerURL string) {
 	mux.HandleFunc("/health", hc.HandleHealth)
 	mux.HandleFunc("/health/ready", hc.HandleReadiness)
 	mux.HandleFunc("/health/live", hc.HandleLiveness)

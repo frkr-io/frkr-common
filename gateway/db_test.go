@@ -8,16 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewDB(t *testing.T) {
+func TestConnectGatewayDB(t *testing.T) {
 	t.Run("creates DB from connection string", func(t *testing.T) {
 		testDB, dbURL := db.SetupTestDB(t, "../migrations")
 		defer testDB.Close()
 
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBURL: dbURL,
 		}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, db)
 		defer db.Close()
@@ -32,7 +32,7 @@ func TestNewDB(t *testing.T) {
 		defer testDB.Close()
 
 		// Extract connection info from test container
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBHost:     "localhost",
 			DBPort:     "26257",
 			DBUser:     "root",
@@ -41,7 +41,7 @@ func TestNewDB(t *testing.T) {
 
 		// Note: This may fail if test container port is not 26257
 		// In practice, we'd get the actual port from the container
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		if err != nil {
 			t.Skip("Skipping - test container port may differ")
 			return
@@ -57,7 +57,7 @@ func TestNewDB(t *testing.T) {
 	})
 
 	t.Run("creates DB with password from components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBHost:     "localhost",
 			DBPort:     "26257",
 			DBUser:     "user",
@@ -65,7 +65,7 @@ func TestNewDB(t *testing.T) {
 			DBName:     "testdb",
 		}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		// This will fail to connect, but we're just testing URL construction
 		if err != nil && err.Error() == "failed to open database connection" {
 			// Expected - we don't have a real DB at this address
@@ -76,13 +76,13 @@ func TestNewDB(t *testing.T) {
 	})
 
 	t.Run("uses default port when DBPort not specified", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBHost: "localhost",
 			DBUser: "root",
 			DBName: "testdb",
 		}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		// Will fail to connect, but URL should include default port
 		if err != nil && err.Error() == "failed to open database connection" {
 			// Expected
@@ -96,7 +96,7 @@ func TestNewDB(t *testing.T) {
 		testDB, dbURL := db.SetupTestDB(t, "../migrations")
 		defer testDB.Close()
 
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBURL:     dbURL,
 			DBHost:    "wronghost",
 			DBPort:    "9999",
@@ -104,7 +104,7 @@ func TestNewDB(t *testing.T) {
 			DBName:    "wrongdb",
 		}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.NoError(t, err)
 		defer db.Close()
 
@@ -114,20 +114,20 @@ func TestNewDB(t *testing.T) {
 	})
 
 	t.Run("error when neither DBURL nor components provided", func(t *testing.T) {
-		cfg := &Config{}
+		cfg := &GatewayBaseConfig{}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.Error(t, err)
 		assert.Nil(t, db)
 		assert.Contains(t, err.Error(), "DBURL or DBHost+DBName")
 	})
 
 	t.Run("error when DBHost provided but DBName missing", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBHost: "localhost",
 		}
 
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.Error(t, err)
 		assert.Nil(t, db)
 		assert.Contains(t, err.Error(), "DBHost+DBName")

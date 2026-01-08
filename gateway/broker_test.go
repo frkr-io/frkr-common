@@ -8,7 +8,7 @@ import (
 
 func TestNewBrokerWriter(t *testing.T) {
 	t.Run("creates writer from connection string", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			BrokerURL: "localhost:9092",
 		}
 
@@ -18,7 +18,7 @@ func TestNewBrokerWriter(t *testing.T) {
 	})
 
 	t.Run("creates writer from individual components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			BrokerHost: "localhost",
 			BrokerPort: "9092",
 		}
@@ -29,7 +29,7 @@ func TestNewBrokerWriter(t *testing.T) {
 	})
 
 	t.Run("uses default port when BrokerPort not specified", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			BrokerHost: "localhost",
 		}
 
@@ -39,7 +39,7 @@ func TestNewBrokerWriter(t *testing.T) {
 	})
 
 	t.Run("uses default host and port when neither specified", func(t *testing.T) {
-		cfg := &Config{}
+		cfg := &GatewayBaseConfig{}
 
 		writer := NewBrokerWriter(cfg)
 		assert.NotNil(t, writer)
@@ -47,7 +47,7 @@ func TestNewBrokerWriter(t *testing.T) {
 	})
 
 	t.Run("connection string takes precedence over components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			BrokerURL:  "priority:9092",
 			BrokerHost: "ignored",
 			BrokerPort: "9999",

@@ -11,7 +11,7 @@ import (
 
 func TestValidateConfig(t *testing.T) {
 	t.Run("valid with DBURL and BrokerURL", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBURL:     "postgres://user@host/db",
 			BrokerURL: "localhost:9092",
@@ -21,7 +21,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("valid with DB components and BrokerURL", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBHost:    "localhost",
 			DBPort:    "26257",
@@ -34,7 +34,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("valid with DBURL and broker components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBURL:     "postgres://user@host/db",
 			BrokerHost: "localhost",
@@ -45,7 +45,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("valid with all components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:   8080,
 			DBHost:     "localhost",
 			DBPort:     "26257",
@@ -59,7 +59,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("invalid - missing DB config", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			BrokerURL: "localhost:9092",
 		}
@@ -69,7 +69,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("invalid - missing DBName", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBHost:    "localhost",
 			BrokerURL: "localhost:9092",
@@ -80,7 +80,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("invalid - missing broker config", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort: 8080,
 			DBURL:    "postgres://user@host/db",
 		}
@@ -90,7 +90,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("invalid - missing BrokerPort", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBURL:     "postgres://user@host/db",
 			BrokerHost: "localhost",
@@ -112,7 +112,7 @@ func TestLoadConfig(t *testing.T) {
 			os.Unsetenv("HTTP_PORT")
 		}()
 
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort: 8080,
 		}
 		LoadConfig(cfg)
@@ -126,7 +126,7 @@ func TestLoadConfig(t *testing.T) {
 		os.Setenv("DB_URL", "postgres://override@override/override")
 		defer os.Unsetenv("DB_URL")
 
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			DBURL: "postgres://original@original/original",
 		}
 		LoadConfig(cfg)
@@ -138,7 +138,7 @@ func TestLoadConfig(t *testing.T) {
 		os.Setenv("HTTP_PORT", "invalid")
 		defer os.Unsetenv("HTTP_PORT")
 
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort: 8080,
 		}
 		LoadConfig(cfg)
@@ -172,7 +172,7 @@ func TestLoadConfigFromFlags(t *testing.T) {
 		
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
-		// Config should have values from env vars (since flags weren't set)
+		// GatewayBaseConfig should have values from env vars (since flags weren't set)
 		assert.NotEmpty(t, cfg.DBURL)
 		assert.NotEmpty(t, cfg.BrokerURL)
 	})

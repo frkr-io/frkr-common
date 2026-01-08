@@ -6,11 +6,19 @@ import (
 	"strings"
 
 	"github.com/frkr-io/frkr-common/models"
+	"github.com/frkr-io/frkr-common/util"
 	"github.com/lib/pq"
 )
 
 // CreateOrGetTenant creates a tenant or returns existing one
 func CreateOrGetTenant(db *sql.DB, name string) (*models.Tenant, error) {
+	if name == "" {
+		return nil, fmt.Errorf("tenant name cannot be empty")
+	}
+	if len(name) > 100 {
+		return nil, fmt.Errorf("tenant name cannot exceed 100 characters")
+	}
+
 	var tenant models.Tenant
 	
 	// Try to get existing tenant
@@ -58,6 +66,21 @@ func CreateOrGetTenant(db *sql.DB, name string) (*models.Tenant, error) {
 
 // CreateStream creates a new stream for a tenant
 func CreateStream(db *sql.DB, tenantID, streamName, description string, retentionDays int) (*models.Stream, error) {
+	// Validate inputs
+	if tenantID == "" {
+		return nil, fmt.Errorf("tenant ID cannot be empty")
+	}
+	// Use shared stream name validation
+	if err := util.ValidateStreamName(streamName); err != nil {
+		return nil, err
+	}
+	// Normalize and validate retention days
+	normalizedDays, err := util.NormalizeRetentionDays(retentionDays)
+	if err != nil {
+		return nil, err
+	}
+	retentionDays = normalizedDays
+
 	// Generate topic name (Kafka Protocol compliant): stream-<tenant-id>-<stream-name>
 	// Sanitize for topic name (lowercase, replace spaces/special chars with hyphens)
 	topicName := fmt.Sprintf("stream-%s-%s", 
@@ -74,7 +97,7 @@ func CreateStream(db *sql.DB, tenantID, streamName, description string, retentio
 	
 	var stream models.Stream
 	
-	err := db.QueryRow(`
+	err = db.QueryRow(`
 		INSERT INTO streams (tenant_id, name, description, retention_days, topic, status)
 		VALUES ($1, $2, $3, $4, $5, 'active')
 		RETURNING id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
@@ -155,6 +178,10 @@ func GetStream(db *sql.DB, tenantID, streamIdentifier string) (*models.Stream, e
 
 // ListStreams lists all streams for a tenant
 func ListStreams(db *sql.DB, tenantID string) ([]*models.Stream, error) {
+	if tenantID == "" {
+		return nil, fmt.Errorf("tenant ID cannot be empty")
+	}
+
 	rows, err := db.Query(`
 		SELECT id, tenant_id, name, description, status, retention_days, topic, created_at, updated_at, deleted_at
 		FROM streams

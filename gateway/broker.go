@@ -8,10 +8,10 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// NewBrokerWriter creates a new broker writer from Config
+// NewBrokerWriter creates a new broker writer from GatewayBaseConfig
 // Supports both connection string (BrokerURL) and individual components
 // Connection string takes precedence if both are provided
-func NewBrokerWriter(cfg *Config) *kafka.Writer {
+func NewBrokerWriter(cfg *GatewayBaseConfig) *kafka.Writer {
 	var brokerURL string
 
 	// Prefer connection string if provided

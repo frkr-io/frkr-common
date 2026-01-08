@@ -29,7 +29,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("full initialization with connection strings", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:  8080,
 			DBURL:     dbURL,
 			BrokerURL: "localhost:9092",
@@ -40,7 +40,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		// Initialize DB
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, db)
 		defer db.Close()
@@ -66,7 +66,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 
 	t.Run("full initialization with individual components", func(t *testing.T) {
 		// Extract connection components from test DB URL
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:   8080,
 			DBHost:     "localhost",
 			DBPort:     "26257",
@@ -81,7 +81,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		// Initialize DB (may skip if port doesn't match)
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		if err != nil {
 			t.Skip("Skipping - test container port may differ")
 			return
@@ -115,7 +115,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 	})
 
 	t.Run("connection string takes precedence over components", func(t *testing.T) {
-		cfg := &Config{
+		cfg := &GatewayBaseConfig{
 			HTTPPort:   8080,
 			DBURL:      dbURL, // This should be used
 			DBHost:     "wronghost",
@@ -128,7 +128,7 @@ func TestGatewayInitializationFlow(t *testing.T) {
 		}
 
 		// Initialize DB - should use DBURL, not components
-		db, err := NewDB(cfg)
+		db, err := ConnectGatewayDB(cfg)
 		require.NoError(t, err)
 		defer db.Close()
 

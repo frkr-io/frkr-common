@@ -8,10 +8,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// NewDB creates a new database connection from Config
+// ConnectGatewayDB creates a new database connection from GatewayBaseConfig
 // Supports both connection string (DBURL) and individual components
 // Connection string takes precedence if both are provided
-func NewDB(cfg *Config) (*sql.DB, error) {
+func ConnectGatewayDB(cfg *GatewayBaseConfig) (*sql.DB, error) {
 	var dbURL string
 
 	// Prefer connection string if provided
