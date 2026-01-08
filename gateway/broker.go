@@ -3,11 +3,41 @@ package gateway
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
 
-// CreateTopicIfNotExists creates a Kafka topic if it doesn't already exist
+// NewBrokerWriter creates a new broker writer from Config
+// Supports both connection string (BrokerURL) and individual components
+// Connection string takes precedence if both are provided
+func NewBrokerWriter(cfg *Config) *kafka.Writer {
+	var brokerURL string
+
+	// Prefer connection string if provided
+	if cfg.BrokerURL != "" {
+		brokerURL = cfg.BrokerURL
+	} else {
+		// Build URL from individual components
+		if cfg.BrokerHost == "" {
+			brokerURL = "localhost:9092" // Default
+		} else {
+			port := cfg.BrokerPort
+			if port == "" {
+				port = "9092" // Default Kafka port
+			}
+			brokerURL = fmt.Sprintf("%s:%s", cfg.BrokerHost, port)
+		}
+	}
+
+	return &kafka.Writer{
+		Addr:         kafka.TCP(brokerURL),
+		Balancer:     &kafka.LeastBytes{},
+		WriteTimeout: 10 * time.Second,
+	}
+}
+
+// CreateTopicIfNotExists creates a topic if it doesn't already exist
 func CreateTopicIfNotExists(brokerURL, topicName string) error {
 	conn, err := kafka.Dial("tcp", brokerURL)
 	if err != nil {

@@ -1,16 +1,30 @@
 package gateway
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 )
 
 // Config holds common gateway configuration
+// Supports both connection strings and individual components
 type Config struct {
-	HTTPPort  int
+	HTTPPort int
+
+	// Database configuration - connection string or individual components
 	DBURL     string
-	BrokerURL string
+	DBHost    string
+	DBPort    string
+	DBUser    string
+	DBPassword string
+	DBName    string
+
+	// Broker configuration - connection string or individual components
+	BrokerURL  string
+	BrokerHost string
+	BrokerPort string
 }
 
 // LoadConfig loads configuration from environment variables (12-factor app pattern)
@@ -31,18 +45,56 @@ func LoadConfig(cfg *Config) {
 }
 
 // ValidateConfig validates that all required configuration is present.
-// Logs fatal error and exits if required config is missing.
-func ValidateConfig(cfg *Config) {
-	if cfg.DBURL == "" {
-		log.Fatal("DB_URL is required (set via --db-url flag or DB_URL environment variable)")
+// Returns error if required config is missing.
+func ValidateConfig(cfg *Config) error {
+	// Validate database config - need either DBURL or individual components
+	hasDBURL := cfg.DBURL != ""
+	hasDBComponents := cfg.DBHost != "" && cfg.DBName != ""
+	if !hasDBURL && !hasDBComponents {
+		return fmt.Errorf("DB_URL or DB components (DBHost, DBName) are required (set via --db-url flag or DB_URL environment variable)")
 	}
-	if cfg.BrokerURL == "" {
-		log.Fatal("BROKER_URL is required (set via --broker-url flag or BROKER_URL environment variable)")
+
+	// Validate broker config - need either BrokerURL or individual components
+	hasBrokerURL := cfg.BrokerURL != ""
+	hasBrokerComponents := cfg.BrokerHost != "" && cfg.BrokerPort != ""
+	if !hasBrokerURL && !hasBrokerComponents {
+		return fmt.Errorf("BROKER_URL or broker components (BrokerHost, BrokerPort) are required (set via --broker-url flag or BROKER_URL environment variable)")
 	}
+
+	return nil
 }
 
 // MustLoadConfig loads and validates configuration, exiting on error
 func MustLoadConfig(cfg *Config) {
 	LoadConfig(cfg)
-	ValidateConfig(cfg)
+	if err := ValidateConfig(cfg); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// LoadConfigFromFlags loads configuration from command-line flags and environment variables
+// Defines flags, parses them if not already parsed, and returns Config
+// Returns Config populated from flags and environment variables, or error if validation fails
+func LoadConfigFromFlags() (*Config, error) {
+	httpPort := flag.Int("http-port", 8080, "HTTP server port")
+	dbURL := flag.String("db-url", "", "Postgres-compatible database connection URL (can use DB_URL env var instead)")
+	brokerURL := flag.String("broker-url", "", "Broker URL (can use BROKER_URL env var instead)")
+
+	// Parse flags if not already parsed
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
+	cfg := &Config{
+		HTTPPort: *httpPort,
+		DBURL:    *dbURL,
+		BrokerURL: *brokerURL,
+	}
+
+	LoadConfig(cfg)
+	if err := ValidateConfig(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }

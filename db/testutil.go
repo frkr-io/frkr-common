@@ -13,10 +13,8 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/cockroachdb"
 )
 
-// SetupTestDB creates a test database container (PostgreSQL-compatible), runs migrations, and returns a database connection.
-// This is a shared utility for setting up test databases across frkr projects.
+// SetupTestDB creates a test database container, runs migrations, and returns a database connection.
 // The migrationsPath should be relative to the frkr-common root (e.g., "migrations").
-// Note: Currently uses CockroachDB via testcontainers for testing, but works with any PostgreSQL-compatible database.
 func SetupTestDB(t *testing.T, migrationsPath string) (*sql.DB, string) {
 	ctx := context.Background()
 
