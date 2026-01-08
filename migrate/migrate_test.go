@@ -199,8 +199,8 @@ func TestRunMigrations_MultipleMigrations(t *testing.T) {
 	if dirty {
 		t.Error("Database should not be in dirty state")
 	}
-	// Should be version 20240103000001 (the last migration)
-	expectedVersion := uint(20240103000001)
+	// Should be version 20240104000001 (the last migration - clients table)
+	expectedVersion := uint(20240104000001)
 	if version != expectedVersion {
 		t.Errorf("Expected version %d, got %d", expectedVersion, version)
 	}

@@ -86,10 +86,10 @@ func TestDatabaseSecretPlugin_GetClientSecret(t *testing.T) {
 	plugin, err := NewDatabaseSecretPlugin(testDB)
 	require.NoError(t, err)
 
-	t.Run("clients table does not exist", func(t *testing.T) {
+	t.Run("client not found", func(t *testing.T) {
 		_, _, err := plugin.GetClientSecret(context.Background(), "testclient")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "does not exist")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("empty clientID", func(t *testing.T) {
