@@ -7,8 +7,51 @@ import (
 	"path/filepath"
 	"testing"
 
+	"sort"
+	"strconv"
+	"strings"
+
 	"github.com/testcontainers/testcontainers-go/modules/cockroachdb"
 )
+
+func getLatestMigrationVersion(t *testing.T, path string) uint {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		t.Fatalf("Failed to read migrations directory: %v", err)
+	}
+
+	var versions []uint
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		// Migration files are named like 20240101000001_create_tenants_table.up.sql
+		name := f.Name()
+		if !strings.HasSuffix(name, ".up.sql") {
+			continue
+		}
+		parts := strings.Split(name, "_")
+		if len(parts) < 1 {
+			continue
+		}
+		version, err := strconv.ParseUint(parts[0], 10, 64)
+		if err != nil {
+			t.Errorf("Failed to parse version from filename %s: %v", name, err)
+			continue
+		}
+		versions = append(versions, uint(version))
+	}
+
+	if len(versions) == 0 {
+		t.Fatalf("No migration files found in %s", path)
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		return versions[i] > versions[j]
+	})
+
+	return versions[0]
+}
 
 func TestRunMigrations_InvalidPath(t *testing.T) {
 	// Test with invalid migration path
@@ -199,8 +242,8 @@ func TestRunMigrations_MultipleMigrations(t *testing.T) {
 	if dirty {
 		t.Error("Database should not be in dirty state")
 	}
-	// Should be version 20240104000001 (the last migration - clients table)
-	expectedVersion := uint(20240104000001)
+	// Verify final version matches the last migration
+	expectedVersion := getLatestMigrationVersion(t, migrationsPath)
 	if version != expectedVersion {
 		t.Errorf("Expected version %d, got %d", expectedVersion, version)
 	}
