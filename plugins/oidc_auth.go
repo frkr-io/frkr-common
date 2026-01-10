@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 )
 
 // OIDCAuthPlugin implements AuthPlugin for OIDC Bearer token authentication
@@ -18,18 +20,28 @@ func NewOIDCAuthPlugin(db *sql.DB) *OIDCAuthPlugin {
 }
 
 // ValidateRequest validates a Bearer token using OIDC
-func (p *OIDCAuthPlugin) ValidateRequest(ctx context.Context, token string, tokenType TokenType, secretPlugin SecretPlugin) (*AuthResult, error) {
-	if tokenType != TokenTypeBearer {
-		return nil, fmt.Errorf("OIDCAuthPlugin only supports bearer tokens, got token type: %s", tokenType)
+func (p *OIDCAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, secretPlugin SecretPlugin) (*AuthResult, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errors.New("missing Authorization header")
 	}
 
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return nil, fmt.Errorf("OIDCAuthPlugin only supports bearer tokens")
+	}
+
+	// token := strings.TrimPrefix(authHeader, "Bearer ")
 	return nil, errors.New("OIDC authentication not yet implemented - use BasicAuthPlugin for now")
 }
 
 // CanAccessStream checks if the user/client can access a specific stream
-func (p *OIDCAuthPlugin) CanAccessStream(ctx context.Context, userID string, streamID string, permission string) (bool, error) {
+func (p *OIDCAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {
 	if p.db == nil {
 		return false, errors.New("database connection required for stream access checks")
+	}
+
+	if authResult.AuthSource != "oidc" {
+		return false, fmt.Errorf("OIDCAuthPlugin cannot authorize user from source: %s", authResult.AuthSource)
 	}
 
 	return false, errors.New("OIDC authorization not yet implemented")

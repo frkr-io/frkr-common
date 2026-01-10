@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/frkr-io/frkr-common/auth"
@@ -23,11 +24,17 @@ func NewBasicAuthPlugin(db *sql.DB) *BasicAuthPlugin {
 }
 
 // ValidateRequest validates a Basic Auth token using SecretPlugin for credential lookup
-func (p *BasicAuthPlugin) ValidateRequest(ctx context.Context, token string, tokenType TokenType, secretPlugin SecretPlugin) (*AuthResult, error) {
-	if tokenType != TokenTypeBasic {
-		return nil, fmt.Errorf("BasicAuthPlugin only supports basic auth, got token type: %s", tokenType)
+func (p *BasicAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, secretPlugin SecretPlugin) (*AuthResult, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errors.New("missing Authorization header")
 	}
 
+	if !strings.HasPrefix(authHeader, "Basic ") {
+		return nil, fmt.Errorf("BasicAuthPlugin only supports basic auth")
+	}
+
+	token := strings.TrimPrefix(authHeader, "Basic ")
 	// Parse Basic Auth header
 	username, password, ok := auth.ValidateBasicAuth(token)
 	if !ok {
@@ -73,17 +80,26 @@ func (p *BasicAuthPlugin) ValidateRequest(ctx context.Context, token string, tok
 		UserID:      username,
 		TenantID:    tenantID,
 		ClientType:  "user",
+		AuthSource:  "basic",
 		Roles:       []string{}, // Can be populated from user record if needed
 		Permissions: []string{}, // Can be populated from user record if needed
 	}, nil
 }
 
 // CanAccessStream checks if the user can access a specific stream
-func (p *BasicAuthPlugin) CanAccessStream(ctx context.Context, userID string, streamID string, permission string) (bool, error) {
+func (p *BasicAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {
 	if p.db == nil {
 		return false, errors.New("database connection required for stream access checks")
 	}
 
+	// 1. Check AuthSource: this plugin only handles "basic" source users
+	if authResult.AuthSource != "basic" {
+		// Return error with filtered message or specific type if we want Composite to know it's "not my user"
+		// For now, returning error is safe as Composite continues iteration on error.
+		return false, fmt.Errorf("BasicAuthPlugin cannot authorize user from source: %s", authResult.AuthSource)
+	}
+
+	userID := authResult.UserID
 	if userID == "" || streamID == "" {
 		return false, errors.New("userID and streamID cannot be empty")
 	}

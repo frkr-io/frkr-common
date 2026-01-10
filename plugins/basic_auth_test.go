@@ -3,10 +3,11 @@ package plugins
 import (
 	"context"
 	"encoding/base64"
+	"net/http/httptest"
 	"testing"
 
-	dbcommon "github.com/frkr-io/frkr-common/db"
 	"github.com/frkr-io/frkr-common/db"
+	dbcommon "github.com/frkr-io/frkr-common/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,48 +28,57 @@ func TestBasicAuthPlugin_ValidateRequest(t *testing.T) {
 
 	t.Run("valid credentials with bcrypt hash", func(t *testing.T) {
 		credentials := base64.StdEncoding.EncodeToString([]byte("testuser:password123"))
-		authHeader := "Basic " + credentials
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Basic "+credentials)
 
-		result, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBasic, secretPlugin)
+		result, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.NoError(t, err)
 		assert.Equal(t, "testuser", result.UserID)
 		assert.Equal(t, tenant.ID, result.TenantID)
 		assert.Equal(t, "user", result.ClientType)
+		assert.Equal(t, "basic", result.AuthSource)
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
 		credentials := base64.StdEncoding.EncodeToString([]byte("testuser:wrongpassword"))
-		authHeader := "Basic " + credentials
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Basic "+credentials)
 
-		_, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBasic, secretPlugin)
+		_, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid credentials")
 	})
 
 	t.Run("non-existent user", func(t *testing.T) {
 		credentials := base64.StdEncoding.EncodeToString([]byte("nonexistent:password"))
-		authHeader := "Basic " + credentials
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Basic "+credentials)
 
-		_, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBasic, secretPlugin)
+		_, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("empty token", func(t *testing.T) {
-		_, err := authPlugin.ValidateRequest(context.Background(), "", TokenTypeBasic, secretPlugin)
+		req := httptest.NewRequest("GET", "/", nil)
+		// Missing header
+		_, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.Error(t, err)
 	})
 
 	t.Run("invalid token format", func(t *testing.T) {
-		_, err := authPlugin.ValidateRequest(context.Background(), "InvalidFormat", TokenTypeBasic, secretPlugin)
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Basic InvalidFormat")
+		_, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.Error(t, err)
 	})
 
 	t.Run("wrong token type", func(t *testing.T) {
 		credentials := base64.StdEncoding.EncodeToString([]byte("testuser:password123"))
-		authHeader := "Basic " + credentials
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Bearer "+credentials) // sending Bearer to Basic plugin
 
-		_, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBearer, secretPlugin)
+		_, err := authPlugin.ValidateRequest(context.Background(), req, secretPlugin)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "only supports basic auth")
 	})
@@ -86,11 +96,13 @@ func TestBasicAuthPlugin_ValidateRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		credentials := base64.StdEncoding.EncodeToString([]byte("k8suser:plainpass123"))
-		authHeader := "Basic " + credentials
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Basic "+credentials)
 
-		result, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBasic, k8sSecretPlugin)
+		result, err := authPlugin.ValidateRequest(context.Background(), req, k8sSecretPlugin)
 		require.NoError(t, err)
 		assert.Equal(t, "k8suser", result.UserID)
+		assert.Equal(t, "basic", result.AuthSource)
 	})
 }
 
@@ -114,59 +126,74 @@ func TestBasicAuthPlugin_CanAccessStream(t *testing.T) {
 
 	authPlugin := NewBasicAuthPlugin(testDB)
 
+	validAuthResult := &AuthResult{
+		UserID:     "user1",
+		AuthSource: "basic",
+	}
+
 	t.Run("user can access stream in same tenant with read permission", func(t *testing.T) {
-		allowed, err := authPlugin.CanAccessStream(context.Background(), "user1", stream1.ID, "read")
+		allowed, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, stream1.ID, "read")
 		require.NoError(t, err)
 		assert.True(t, allowed)
 	})
 
 	t.Run("user can access stream in same tenant with write permission", func(t *testing.T) {
-		allowed, err := authPlugin.CanAccessStream(context.Background(), "user1", stream1.ID, "write")
+		allowed, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, stream1.ID, "write")
 		require.NoError(t, err)
 		assert.True(t, allowed)
 	})
 
 	t.Run("user cannot access stream in different tenant", func(t *testing.T) {
-		allowed, err := authPlugin.CanAccessStream(context.Background(), "user1", stream2.ID, "read")
+		allowed, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, stream2.ID, "read")
 		require.NoError(t, err)
 		assert.False(t, allowed)
 	})
 
 	t.Run("non-existent user", func(t *testing.T) {
-		_, err := authPlugin.CanAccessStream(context.Background(), "nonexistent", stream1.ID, "read")
+		res := &AuthResult{UserID: "nonexistent", AuthSource: "basic"}
+		_, err := authPlugin.CanAccessStream(context.Background(), res, stream1.ID, "read")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("non-existent stream", func(t *testing.T) {
-		allowed, err := authPlugin.CanAccessStream(context.Background(), "user1", "nonexistent-stream-id", "read")
+		allowed, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, "nonexistent-stream-id", "read")
 		require.NoError(t, err)
 		assert.False(t, allowed) // Returns false, not error
 	})
 
 	t.Run("nil database", func(t *testing.T) {
 		plugin := NewBasicAuthPlugin(nil)
-		_, err := plugin.CanAccessStream(context.Background(), "user1", stream1.ID, "read")
+		_, err := plugin.CanAccessStream(context.Background(), validAuthResult, stream1.ID, "read")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "database connection required")
 	})
 
 	t.Run("empty userID", func(t *testing.T) {
-		_, err := authPlugin.CanAccessStream(context.Background(), "", stream1.ID, "read")
+		res := &AuthResult{UserID: "", AuthSource: "basic"}
+		_, err := authPlugin.CanAccessStream(context.Background(), res, stream1.ID, "read")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot be empty")
 	})
 
 	t.Run("empty streamID", func(t *testing.T) {
-		_, err := authPlugin.CanAccessStream(context.Background(), "user1", "", "read")
+		_, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, "", "read")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot be empty")
 	})
 
 	t.Run("invalid permission", func(t *testing.T) {
-		allowed, err := authPlugin.CanAccessStream(context.Background(), "user1", stream1.ID, "delete")
+		allowed, err := authPlugin.CanAccessStream(context.Background(), validAuthResult, stream1.ID, "delete")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported permission")
+		assert.False(t, allowed)
+	})
+
+	t.Run("wrong auth source", func(t *testing.T) {
+		res := &AuthResult{UserID: "user1", AuthSource: "oidc"}
+		allowed, err := authPlugin.CanAccessStream(context.Background(), res, stream1.ID, "read")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot authorize user from source")
 		assert.False(t, allowed)
 	})
 }
@@ -194,9 +221,10 @@ func TestBasicAuthPlugin_TenantIDLookup(t *testing.T) {
 	authPlugin := NewBasicAuthPlugin(testDB)
 
 	credentials := base64.StdEncoding.EncodeToString([]byte("lookupuser:pass123"))
-	authHeader := "Basic " + credentials
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Authorization", "Basic "+credentials)
 
-	result, err := authPlugin.ValidateRequest(context.Background(), authHeader, TokenTypeBasic, k8sSecretPlugin)
+	result, err := authPlugin.ValidateRequest(context.Background(), req, k8sSecretPlugin)
 	require.NoError(t, err)
 	assert.Equal(t, tenant.ID, result.TenantID)
 }

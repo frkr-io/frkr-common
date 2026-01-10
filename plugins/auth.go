@@ -1,6 +1,9 @@
 package plugins
 
-import "context"
+import (
+	"context"
+	"net/http"
+)
 
 // TokenType defines the type of authentication token
 type TokenType string
@@ -26,6 +29,9 @@ type AuthResult struct {
 	// ClientType indicates the type of client: "user", "client", or "service_account"
 	ClientType string
 
+	// AuthSource indicates the source/plugin that authenticated the user (e.g., "basic", "oidc")
+	AuthSource string
+
 	// Roles are the user's roles
 	Roles []string
 
@@ -35,11 +41,11 @@ type AuthResult struct {
 
 // AuthPlugin is the interface for authentication plugins
 type AuthPlugin interface {
-	// ValidateRequest validates an authentication token and returns auth result
+	// ValidateRequest validates the request (e.g. checking headers) and returns auth result
 	// Uses SecretPlugin for credential lookup (passwords, client secrets)
-	ValidateRequest(ctx context.Context, token string, tokenType TokenType, secretPlugin SecretPlugin) (*AuthResult, error)
+	ValidateRequest(ctx context.Context, r *http.Request, secretPlugin SecretPlugin) (*AuthResult, error)
 
 	// CanAccessStream checks if the user/client can access a specific stream
-	CanAccessStream(ctx context.Context, userID string, streamID string, permission string) (bool, error)
+	CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error)
 }
 
