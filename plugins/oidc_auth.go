@@ -35,13 +35,14 @@ func (p *OIDCAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, s
 }
 
 // CanAccessStream checks if the user/client can access a specific stream
+// CanAccessStream checks if the user/client can access a specific stream
 func (p *OIDCAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {
-	if p.db == nil {
-		return false, errors.New("database connection required for stream access checks")
-	}
-
 	if authResult.AuthSource != "oidc" {
 		return false, fmt.Errorf("OIDCAuthPlugin cannot authorize user from source: %s", authResult.AuthSource)
+	}
+
+	if p.db == nil {
+		return false, errors.New("database connection required for stream access checks")
 	}
 
 	return false, errors.New("OIDC authorization not yet implemented")

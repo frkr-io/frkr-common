@@ -34,9 +34,8 @@ func (p *BasicAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, 
 		return nil, fmt.Errorf("BasicAuthPlugin only supports basic auth")
 	}
 
-	token := strings.TrimPrefix(authHeader, "Basic ")
 	// Parse Basic Auth header
-	username, password, ok := auth.ValidateBasicAuth(token)
+	username, password, ok := auth.ValidateBasicAuth(authHeader)
 	if !ok {
 		return nil, errors.New("invalid basic auth format")
 	}
