@@ -81,19 +81,8 @@ func CreateStream(db *sql.DB, tenantID, streamName, description string, retentio
 	}
 	retentionDays = normalizedDays
 
-	// Generate topic name (Kafka Protocol compliant): stream-<tenant-id>-<stream-name>
-	// Sanitize for topic name (lowercase, replace spaces/special chars with hyphens)
-	topicName := fmt.Sprintf("stream-%s-%s", 
-		strings.ToLower(strings.ReplaceAll(tenantID, "-", "")),
-		strings.ToLower(strings.ReplaceAll(streamName, " ", "-")))
-	
-	// Remove any remaining invalid characters
-	topicName = strings.Map(func(r rune) rune {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			return r
-		}
-		return -1
-	}, topicName)
+	// Generate topic name (Kafka Protocol compliant)
+	topicName := GenerateTopicName(tenantID, streamName)
 	
 	var stream models.Stream
 	
