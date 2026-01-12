@@ -41,11 +41,14 @@ type AuthResult struct {
 
 // AuthPlugin is the interface for authentication plugins
 type AuthPlugin interface {
-	// ValidateRequest validates the request (e.g. checking headers) and returns auth result
+	// ValidateRequest validates an HTTP request and returns auth result
 	// Uses SecretPlugin for credential lookup (passwords, client secrets)
 	ValidateRequest(ctx context.Context, r *http.Request, secretPlugin SecretPlugin) (*AuthResult, error)
+
+	// ValidateAuthHeader validates an Authorization header value directly
+	// This is protocol-agnostic and works for both HTTP and gRPC
+	ValidateAuthHeader(ctx context.Context, authHeader string, secretPlugin SecretPlugin) (*AuthResult, error)
 
 	// CanAccessStream checks if the user/client can access a specific stream
 	CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error)
 }
-

@@ -34,6 +34,19 @@ func (p *OIDCAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, s
 	return nil, errors.New("OIDC authentication not yet implemented - use BasicAuthPlugin for now")
 }
 
+// ValidateAuthHeader validates a Bearer token from the header string directly
+func (p *OIDCAuthPlugin) ValidateAuthHeader(ctx context.Context, authHeader string, secretPlugin SecretPlugin) (*AuthResult, error) {
+	if authHeader == "" {
+		return nil, errors.New("missing Authorization header")
+	}
+
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return nil, fmt.Errorf("OIDCAuthPlugin only supports bearer tokens")
+	}
+
+	return nil, errors.New("OIDC authentication not yet implemented - use BasicAuthPlugin for now")
+}
+
 // CanAccessStream checks if the user/client can access a specific stream
 // CanAccessStream checks if the user/client can access a specific stream
 func (p *OIDCAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {

@@ -36,6 +36,24 @@ func (p *CompositeAuthPlugin) ValidateRequest(ctx context.Context, r *http.Reque
 	return nil, fmt.Errorf("no auth plugin could validate the request")
 }
 
+// ValidateAuthHeader iterates through all plugins until one succeeds or all fail
+func (p *CompositeAuthPlugin) ValidateAuthHeader(ctx context.Context, authHeader string, secretPlugin SecretPlugin) (*AuthResult, error) {
+	var lastErr error
+	for _, plugin := range p.plugins {
+		res, err := plugin.ValidateAuthHeader(ctx, authHeader, secretPlugin)
+		if err == nil && res != nil {
+			return res, nil
+		}
+		if err != nil {
+			lastErr = err
+		}
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return nil, fmt.Errorf("no auth plugin could validate the auth header")
+}
+
 // CanAccessStream routes the check to the plugin that originated the auth (AuthSource).
 // If AuthSource is empty, it tries all plugins (fallback).
 func (p *CompositeAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {

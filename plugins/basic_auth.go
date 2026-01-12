@@ -85,6 +85,62 @@ func (p *BasicAuthPlugin) ValidateRequest(ctx context.Context, r *http.Request, 
 	}, nil
 }
 
+// ValidateAuthHeader validates a Basic Auth header string directly (protocol-agnostic)
+func (p *BasicAuthPlugin) ValidateAuthHeader(ctx context.Context, authHeader string, secretPlugin SecretPlugin) (*AuthResult, error) {
+	if authHeader == "" {
+		return nil, errors.New("missing Authorization header")
+	}
+
+	if !strings.HasPrefix(authHeader, "Basic ") {
+		return nil, fmt.Errorf("BasicAuthPlugin only supports basic auth")
+	}
+
+	// Parse Basic Auth header
+	username, password, ok := auth.ValidateBasicAuth(authHeader)
+	if !ok {
+		return nil, errors.New("invalid basic auth format")
+	}
+
+	if username == "" || password == "" {
+		return nil, errors.New("username and password cannot be empty")
+	}
+
+	// Get password from SecretPlugin
+	passwordHash, tenantID, err := secretPlugin.GetUserPassword(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Verify password
+	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	if err != nil {
+		if passwordHash != password {
+			return nil, errors.New("invalid credentials")
+		}
+	}
+
+	// Get tenant ID from database if not available
+	if tenantID == "" && p.db != nil {
+		var userTenantID sql.NullString
+		err := p.db.QueryRowContext(ctx, `
+			SELECT tenant_id FROM users 
+			WHERE username = $1 AND deleted_at IS NULL
+		`, username).Scan(&userTenantID)
+		if err == nil && userTenantID.Valid {
+			tenantID = userTenantID.String
+		}
+	}
+
+	return &AuthResult{
+		UserID:      username,
+		TenantID:    tenantID,
+		ClientType:  "user",
+		AuthSource:  "basic",
+		Roles:       []string{},
+		Permissions: []string{},
+	}, nil
+}
+
 // CanAccessStream checks if the user can access a specific stream
 func (p *BasicAuthPlugin) CanAccessStream(ctx context.Context, authResult *AuthResult, streamID string, permission string) (bool, error) {
 	if p.db == nil {
