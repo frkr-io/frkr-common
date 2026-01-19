@@ -10,7 +10,7 @@ import (
 )
 
 func TestGatewayInitializationFlow(t *testing.T) {
-	testDB, dbURL := db.SetupTestDB(t, "../migrations")
+	testDB, dbURL := db.SetupTestDB(t)
 	defer testDB.Close()
 
 	// Setup users table

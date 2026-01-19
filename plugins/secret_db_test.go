@@ -45,7 +45,7 @@ func setupTestUser(t *testing.T, dbConn *sql.DB, tenantID, username, password st
 }
 
 func TestDatabaseSecretPlugin_GetUserPassword(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	// Create a test tenant
 	tenant, err := dbcommon.CreateOrGetTenant(testDB, "test-tenant")
@@ -81,7 +81,7 @@ func TestDatabaseSecretPlugin_GetUserPassword(t *testing.T) {
 }
 
 func TestDatabaseSecretPlugin_GetClientSecret(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	plugin, err := NewDatabaseSecretPlugin(testDB)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestDatabaseSecretPlugin_GetClientSecret(t *testing.T) {
 }
 
 func TestDatabaseSecretPlugin_GetEncryptionKey(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	plugin, err := NewDatabaseSecretPlugin(testDB)
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestDatabaseSecretPlugin_GetEncryptionKey(t *testing.T) {
 }
 
 func TestDatabaseSecretPlugin_GetSecret(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	tenant, err := dbcommon.CreateOrGetTenant(testDB, "test-tenant-secret")
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestNewDatabaseSecretPlugin(t *testing.T) {
 	})
 
 	t.Run("valid database", func(t *testing.T) {
-		testDB, _ := db.SetupTestDB(t, "../migrations")
+		testDB, _ := db.SetupTestDB(t)
 		plugin, err := NewDatabaseSecretPlugin(testDB)
 		require.NoError(t, err)
 		assert.NotNil(t, plugin)

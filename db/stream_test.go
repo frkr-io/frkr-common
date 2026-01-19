@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -42,12 +41,8 @@ func setupTestDB(t *testing.T) (*sql.DB, string) {
 		connConfig.Database,
 	)
 
-	// Get absolute path to migrations directory (from db/ directory, go up to frkr-common root)
-	migrationsPath, err := filepath.Abs("../migrations")
-	require.NoError(t, err)
-
 	// Run migrations
-	err = migrate.RunMigrations(migrateURL, migrationsPath)
+	err = migrate.RunMigrations(migrateURL)
 	require.NoError(t, err)
 
 	// Build connection string for sql.Open (postgres:// format for lib/pq)

@@ -13,7 +13,7 @@ import (
 )
 
 func TestBasicAuthPlugin_ValidateRequest(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	tenant, err := dbcommon.CreateOrGetTenant(testDB, "test-tenant-auth")
 	require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestBasicAuthPlugin_ValidateRequest(t *testing.T) {
 }
 
 func TestBasicAuthPlugin_CanAccessStream(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	tenant1, err := dbcommon.CreateOrGetTenant(testDB, "tenant-1")
 	require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestBasicAuthPlugin_CanAccessStream(t *testing.T) {
 }
 
 func TestBasicAuthPlugin_TenantIDLookup(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	tenant, err := dbcommon.CreateOrGetTenant(testDB, "test-tenant-lookup")
 	require.NoError(t, err)

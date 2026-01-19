@@ -15,7 +15,7 @@ import (
 )
 
 func TestAuthenticateHTTPRequest(t *testing.T) {
-	testDB, _ := db.SetupTestDB(t, "../migrations")
+	testDB, _ := db.SetupTestDB(t)
 
 	tenant, err := dbcommon.CreateOrGetTenant(testDB, "test-tenant-http")
 	require.NoError(t, err)

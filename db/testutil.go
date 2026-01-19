@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/frkr-io/frkr-common/migrate"
@@ -14,8 +13,7 @@ import (
 )
 
 // SetupTestDB creates a test database container, runs migrations, and returns a database connection.
-// The migrationsPath should be relative to the frkr-common root (e.g., "migrations").
-func SetupTestDB(t *testing.T, migrationsPath string) (*sql.DB, string) {
+func SetupTestDB(t *testing.T) (*sql.DB, string) {
 	ctx := context.Background()
 
 	// Start CockroachDB container
@@ -43,13 +41,8 @@ func SetupTestDB(t *testing.T, migrationsPath string) (*sql.DB, string) {
 		connConfig.Database,
 	)
 
-	// Get absolute path to migrations directory
-	// migrationsPath should be relative to frkr-common root
-	absMigrationsPath, err := filepath.Abs(migrationsPath)
-	require.NoError(t, err)
-
 	// Run migrations
-	err = migrate.RunMigrations(migrateURL, absMigrationsPath)
+	err = migrate.RunMigrations(migrateURL)
 	require.NoError(t, err)
 
 	// Build connection string for sql.Open (postgres:// format for lib/pq)

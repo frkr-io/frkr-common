@@ -10,7 +10,7 @@ import (
 
 func TestConnectGatewayDB(t *testing.T) {
 	t.Run("creates DB from connection string", func(t *testing.T) {
-		testDB, dbURL := db.SetupTestDB(t, "../migrations")
+		testDB, dbURL := db.SetupTestDB(t)
 		defer testDB.Close()
 
 		cfg := &GatewayBaseConfig{
@@ -28,7 +28,7 @@ func TestConnectGatewayDB(t *testing.T) {
 	})
 
 	t.Run("creates DB from individual components", func(t *testing.T) {
-		testDB, _ := db.SetupTestDB(t, "../migrations")
+		testDB, _ := db.SetupTestDB(t)
 		defer testDB.Close()
 
 		// Extract connection info from test container
@@ -93,7 +93,7 @@ func TestConnectGatewayDB(t *testing.T) {
 	})
 
 	t.Run("connection string takes precedence over components", func(t *testing.T) {
-		testDB, dbURL := db.SetupTestDB(t, "../migrations")
+		testDB, dbURL := db.SetupTestDB(t)
 		defer testDB.Close()
 
 		cfg := &GatewayBaseConfig{
